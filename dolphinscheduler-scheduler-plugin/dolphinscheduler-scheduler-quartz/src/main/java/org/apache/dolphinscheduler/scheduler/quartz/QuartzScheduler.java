@@ -63,7 +63,14 @@ public class QuartzScheduler implements SchedulerApi {
 
     @Override
     public void insertOrUpdateScheduleTask(int projectId, Schedule schedule) throws SchedulerException {
+        // 封装一个JobKey，用于表示job身份 name：job_scheduler.getId()；group：jobgroup_project_id
         JobKey jobKey = QuartzTaskUtils.getJobKey(schedule.getId(), projectId);
+        // 构建一个JobDataMap
+        /**
+         *         dataMap.put(PROJECT_ID, projectId);
+         *         dataMap.put(SCHEDULE_ID, schedule.getId());
+         *         dataMap.put(SCHEDULE, JSONUtils.toJsonString(schedule));
+         */
         Map<String, Object> jobDataMap = QuartzTaskUtils.buildDataMap(projectId, schedule);
         String cronExpression = schedule.getCrontab();
         String timezoneId = schedule.getTimezoneId();
@@ -86,6 +93,7 @@ public class QuartzScheduler implements SchedulerApi {
             startDate = now;
         }
 
+        // 上写锁
         lock.writeLock().lock();
         try {
 
@@ -96,15 +104,18 @@ public class QuartzScheduler implements SchedulerApi {
                 jobDetail = scheduler.getJobDetail(jobKey);
                 jobDetail.getJobDataMap().putAll(jobDataMap);
             } else {
+                // 如果jobkey不存在，构造一个jobDetail实例，调度类是ProcessScheduleTask
                 jobDetail = newJob(ProcessScheduleTask.class).withIdentity(jobKey).build();
 
                 jobDetail.getJobDataMap().putAll(jobDataMap);
 
+                // 添加job到调度器
                 scheduler.addJob(jobDetail, false, true);
 
                 logger.info("Add job, job name: {}, group name: {}", jobKey.getName(), jobKey.getGroup());
             }
 
+            // 封装一个触发器key
             TriggerKey triggerKey = new TriggerKey(jobKey.getName(), jobKey.getGroup());
             /*
              * Instructs the Scheduler that upon a mis-fire
@@ -125,9 +136,12 @@ public class QuartzScheduler implements SchedulerApi {
 
             if (scheduler.checkExists(triggerKey)) {
                 // updateProcessInstance scheduler trigger when scheduler cycle changes
+                // 获取老的trigger
                 CronTrigger oldCronTrigger = (CronTrigger) scheduler.getTrigger(triggerKey);
+                // 获取corn表达式
                 String oldCronExpression = oldCronTrigger.getCronExpression();
 
+                // 如果新的corn表达式不等于老的corn表达式，那么使用新的corn触发器重新调度job
                 if (!Strings.nullToEmpty(cronExpression).equalsIgnoreCase(Strings.nullToEmpty(oldCronExpression))) {
                     // reschedule job trigger
                     scheduler.rescheduleJob(triggerKey, cronTrigger);
@@ -144,6 +158,7 @@ public class QuartzScheduler implements SchedulerApi {
             logger.error("Failed to add scheduler task, projectId: {}, scheduler: {}", projectId, schedule, e);
             throw new SchedulerException("Add schedule job failed", e);
         } finally {
+            // 解锁
             lock.writeLock().unlock();
         }
     }
@@ -154,6 +169,7 @@ public class QuartzScheduler implements SchedulerApi {
         try {
             if (scheduler.checkExists(jobKey)) {
                 logger.info("Try to delete scheduler task, projectId: {}, schedulerId: {}", projectId, scheduleId);
+                // 直接从调度器中删除任务
                 scheduler.deleteJob(jobKey);
             }
         } catch (Exception e) {

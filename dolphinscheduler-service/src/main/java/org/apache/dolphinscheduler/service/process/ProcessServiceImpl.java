@@ -487,6 +487,7 @@ public class ProcessServiceImpl implements ProcessService {
      */
     @Override
     public List<TaskDefinition> getTaskNodeListByDefinition(long defineCode) {
+        // 查找工作流
         ProcessDefinition processDefinition = processDefineMapper.queryByCode(defineCode);
         if (processDefinition == null) {
             logger.error("process define not exists");
@@ -639,6 +640,7 @@ public class ProcessServiceImpl implements ProcessService {
      */
     @Override
     public void recurseFindSubProcess(long parentCode, List<Long> ids) {
+        // 查找当前工作流的所有任务节点
         List<TaskDefinition> taskNodeList = this.getTaskNodeListByDefinition(parentCode);
 
         if (taskNodeList != null && !taskNodeList.isEmpty()) {

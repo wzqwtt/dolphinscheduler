@@ -282,23 +282,29 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
                                  long projectCode,
                                  Integer id,
                                  ReleaseState scheduleStatus) {
+        // 通过projectCode从t_ds_project表中查找当前project
         Project project = projectMapper.queryByCode(projectCode);
-        // check project auth
+
+        // 检查当前登录用户是否具有权限
         projectService.checkProjectAndAuthThrowException(loginUser, project, null);
 
         // check schedule exists
+        // 通过SchedulerId从t_ds_schedules调度表中查找调度信息
         Schedule scheduleObj = scheduleMapper.selectById(id);
 
+        // 如果为空，则抛出异常
         if (scheduleObj == null) {
             logger.error("Schedule does not exist, scheduleId:{}.", id);
             throw new ServiceException(Status.SCHEDULE_CRON_NOT_EXISTS, id);
         }
-        // check schedule release state
+        // 如果当前调度状态 等于 要设置scheduler的状态，就可以直接抛异常了，因为不需要变化
         if (scheduleObj.getReleaseState() == scheduleStatus) {
             logger.warn("Schedule state does not need to change due to schedule state is already {}, scheduleId:{}.",
                     scheduleObj.getReleaseState().getDescp(), scheduleObj.getId());
             throw new ServiceException(Status.SCHEDULE_CRON_REALEASE_NEED_NOT_CHANGE, scheduleStatus);
         }
+
+        // 通过调度信息里面关联的工作流定义码（processDefinitionCode）从t_ds_process_definition表中查找流信息
         ProcessDefinition processDefinition =
                 processDefinitionMapper.queryByCode(scheduleObj.getProcessDefinitionCode());
         if (processDefinition == null || projectCode != processDefinition.getProjectCode()) {
@@ -307,6 +313,7 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
             throw new ServiceException(Status.PROCESS_DEFINE_NOT_EXIST,
                     String.valueOf(scheduleObj.getProcessDefinitionCode()));
         }
+        // 通过 projectCode和ProcessDefinitionCode 从t_ds_process_task_relation表中查出所有该工作流下所有任务
         List<ProcessTaskRelation> processTaskRelations =
                 processTaskRelationMapper.queryByProcessCode(projectCode, scheduleObj.getProcessDefinitionCode());
         if (processTaskRelations.isEmpty()) {
@@ -314,17 +321,23 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
                     processDefinition.getCode());
             throw new ServiceException(Status.PROCESS_DAG_IS_EMPTY);
         }
+
+        // 如果是此次操作是上线
         if (scheduleStatus == ReleaseState.ONLINE) {
             // check process definition release state
+            // 如果此时工作流的不是上线状态
             if (processDefinition.getReleaseState() != ReleaseState.ONLINE) {
+                // 只有工作流状态是上线，才可以更改schedule的状态为上线
                 logger.warn("Only process definition state is {} can change schedule state, processDefinitionCode:{}.",
                         ReleaseState.ONLINE.getDescp(), processDefinition.getCode());
                 throw new ServiceException(Status.PROCESS_DEFINE_NOT_RELEASE, processDefinition.getName());
             }
             // check sub process definition release state
+            // 递归查找当前工作流所有的子工作流
             List<Long> subProcessDefineCodes = new ArrayList<>();
             processService.recurseFindSubProcess(processDefinition.getCode(), subProcessDefineCodes);
             if (!subProcessDefineCodes.isEmpty()) {
+                // 查找子工作流
                 List<ProcessDefinition> subProcessDefinitionList =
                         processDefinitionMapper.queryByCodes(subProcessDefineCodes);
                 if (subProcessDefinitionList != null && !subProcessDefinitionList.isEmpty()) {
@@ -345,6 +358,7 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
         }
 
         // check master server exists
+        // 获取所有部署master服务的机器
         List<Server> masterServers = monitorService.getServerListFromRegistry(true);
 
         if (masterServers.isEmpty()) {
@@ -355,16 +369,19 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
         // set status
         scheduleObj.setReleaseState(scheduleStatus);
 
+        // 更新t_ds_schedules表
         scheduleMapper.updateById(scheduleObj);
 
         try {
             switch (scheduleStatus) {
                 case ONLINE:
+                    // 通知master设置流上线
                     logger.info("Call master client set schedule online, project id: {}, flow id: {},host: {}",
                             project.getId(), processDefinition.getId(), masterServers);
                     setSchedule(project.getId(), scheduleObj);
                     break;
                 case OFFLINE:
+                    // 通知master设置流下线
                     logger.info("Call master client set schedule offline, project id: {}, flow id: {},host: {}",
                             project.getId(), processDefinition.getId(), masterServers);
                     deleteSchedule(project.getId(), id);
@@ -465,6 +482,7 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
 
     public void setSchedule(int projectId, Schedule schedule) {
         logger.info("set schedule, project id: {}, scheduleId: {}", projectId, schedule.getId());
+        // 在quartz调度器中插入或更新调度任务
         schedulerApi.insertOrUpdateScheduleTask(projectId, schedule);
     }
 
@@ -478,6 +496,7 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
     @Override
     public void deleteSchedule(int projectId, int scheduleId) {
         logger.info("delete schedules of project id:{}, schedule id:{}", projectId, scheduleId);
+        // 在quartz调度器中删除调度任务
         schedulerApi.deleteScheduleTask(projectId, scheduleId);
     }
 
