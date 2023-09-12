@@ -134,7 +134,7 @@ public class DataAnalysisController extends BaseController {
     @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
     public Result countDefinitionByUser(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
                                         @RequestParam(value = "projectCode", required = false, defaultValue = "0") long projectCode) {
-
+        // 流程定义统计
         Map<String, Object> result = dataAnalysisService.countDefinitionByUser(loginUser, projectCode);
         return returnDataList(result);
     }

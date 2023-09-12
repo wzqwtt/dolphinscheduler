@@ -205,6 +205,7 @@ public class DataAnalysisServiceImpl extends BaseServiceImpl implements DataAnal
     public Map<String, Object> countDefinitionByUser(User loginUser, long projectCode) {
         Map<String, Object> result = new HashMap<>();
         if (projectCode != 0) {
+            // 如果projectCode不等于0，根据projectCode查找project
             Project project = projectMapper.queryByCode(projectCode);
             result = projectService.checkProjectAndAuth(loginUser, project, projectCode, PROJECT_OVERVIEW);
             if (result.get(Constants.STATUS) != Status.SUCCESS) {

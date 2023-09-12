@@ -190,6 +190,8 @@ public final class ZookeeperRegistry implements Registry {
     @Override
     public List<String> children(String key) {
         try {
+            // key : /dolphinscheduler/nodes/master or worker
+            // 获取该路径下所有的节点
             List<String> result = client.getChildren().forPath(key);
             result.sort(Comparator.reverseOrder());
             return result;

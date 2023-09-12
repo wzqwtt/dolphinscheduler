@@ -365,9 +365,10 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
     @Override
     public Map<String, Object> execute(User loginUser, long projectCode, Integer processInstanceId,
                                        ExecuteType executeType) {
+        // 从t_ds_project表中查找project
         Project project = projectMapper.queryByCode(projectCode);
-        // check user access for project
 
+        // check user access for project
         Map<String, Object> result = projectService.checkProjectAndAuth(loginUser, project, projectCode,
                 ApiFuncIdentificationConstant.map.get(executeType));
         if (result.get(Constants.STATUS) != Status.SUCCESS) {
@@ -375,17 +376,22 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
         }
 
         // check master exists
+        // 检查master服务是否存在
         if (!checkMasterExists(result)) {
             return result;
         }
 
+        // 通过工作流实例id查找工作流实例，表：t_ds_process_instance
         ProcessInstance processInstance = processService.findProcessInstanceDetailById(processInstanceId)
                 .orElseThrow(() -> new ServiceException(Status.PROCESS_INSTANCE_NOT_EXIST, processInstanceId));
 
+        // 从t_ds_process_definition表查找工作流
         ProcessDefinition processDefinition =
                 processService.findProcessDefinition(processInstance.getProcessDefinitionCode(),
                         processInstance.getProcessDefinitionVersion());
+        // 设置为上线状态
         processDefinition.setReleaseState(ReleaseState.ONLINE);
+        // 如果执行类型不是STOP并且不是PAUSE，需要检查工作流是否可以执行
         if (executeType != ExecuteType.STOP && executeType != ExecuteType.PAUSE) {
             result =
                     checkProcessDefinitionValid(projectCode, processDefinition,

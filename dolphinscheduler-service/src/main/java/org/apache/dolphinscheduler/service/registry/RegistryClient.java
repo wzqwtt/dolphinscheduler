@@ -95,6 +95,7 @@ public class RegistryClient {
     }
 
     public List<Server> getServerList(NodeType nodeType) {
+        // 获取nodeType对应的服务器列表
         Map<String, String> serverMaps = getServerMaps(nodeType);
         String parentPath = rootNodePath(nodeType);
 
@@ -141,9 +142,13 @@ public class RegistryClient {
     public Map<String, String> getServerMaps(NodeType nodeType) {
         Map<String, String> serverMap = new HashMap<>();
         try {
+            // 查找节点在zk中的路径
+            // master：/nodes/master；worker：/nodes/worker
             String path = rootNodePath(nodeType);
+            // 获取节点路径
             Collection<String> serverList = getServerNodes(nodeType);
             for (String server : serverList) {
+                // key: ip:host, value:  /nodes/master or worker/ip:host
                 serverMap.putIfAbsent(server, get(path + SINGLE_SLASH + server));
             }
         } catch (Exception e) {
@@ -260,7 +265,9 @@ public class RegistryClient {
     }
 
     private Collection<String> getServerNodes(NodeType nodeType) {
+        // 获取服务节点
         final String path = rootNodePath(nodeType);
+        // 返回一组节点路径
         return getChildrenKeys(path);
     }
 
