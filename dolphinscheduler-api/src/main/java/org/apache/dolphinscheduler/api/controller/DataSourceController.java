@@ -96,7 +96,7 @@ public class DataSourceController extends BaseController {
                                    @ApiParam(name = "dataSourceParam", value = "DATA_SOURCE_PARAM", required = true) @RequestBody String jsonStr) {
         // 数据是以json的格式传过来的，这一步先解析json串
         BaseDataSourceParamDTO dataSourceParam = DataSourceUtils.buildDatasourceParam(jsonStr);
-        //
+        // 创建数据源，检查连接后在数据库插入
         return dataSourceService.createDataSource(loginUser, dataSourceParam);
     }
 

@@ -43,7 +43,7 @@ public class DataSourceProcessorManager {
     }
 
     public void installProcessor() {
-        // 注册DataSourceProcessor到map
+        // 注册DataSourceProcessor到map，插件化SPI机制
         ServiceLoader.load(DataSourceProcessor.class).forEach(factory -> {
             final String name = factory.getDbType().name();
 
