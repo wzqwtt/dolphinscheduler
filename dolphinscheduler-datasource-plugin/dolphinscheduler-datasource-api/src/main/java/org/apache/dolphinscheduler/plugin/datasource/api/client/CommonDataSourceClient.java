@@ -40,6 +40,10 @@ public class CommonDataSourceClient implements DataSourceClient {
     private static final Logger logger = LoggerFactory.getLogger(CommonDataSourceClient.class);
 
     public static final String COMMON_USER = "root";
+
+    /**
+     * 查询验证
+     */
     public static final String COMMON_VALIDATION_QUERY = "select 1";
 
     protected final BaseConnectionParam baseConnectionParam;
@@ -49,7 +53,9 @@ public class CommonDataSourceClient implements DataSourceClient {
     public CommonDataSourceClient(BaseConnectionParam baseConnectionParam, DbType dbType) {
         this.baseConnectionParam = baseConnectionParam;
         preInit();
+        // 检查环境
         checkEnv(baseConnectionParam);
+        // 初始化客户端
         initClient(baseConnectionParam, dbType);
         checkClient();
     }

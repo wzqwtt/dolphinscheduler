@@ -33,7 +33,7 @@ public class DataSourceProcessorManager {
     private static final Logger logger = LoggerFactory.getLogger(DataSourceProcessorManager.class);
 
     /**
-     * key: DbType.name， value: DataSourceProcessor，这个并发map管理案例所有数据源处理器
+     * key: DbType.name， value: DataSourceProcessor，这个并发map管理所有数据源处理器
      */
     private static final Map<String, DataSourceProcessor> dataSourceProcessorMap = new ConcurrentHashMap<>();
 

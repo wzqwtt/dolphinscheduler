@@ -49,6 +49,9 @@ public class DataSourceProcessorProvider {
         return dataSourcePluginManager.getDataSourceProcessorMap();
     }
 
+    /**
+     * 初始化DataSourceProcessorPlugin
+     */
     private void initDataSourceProcessorPlugin() {
         dataSourcePluginManager = new DataSourceProcessorManager();
         dataSourcePluginManager.installProcessor();

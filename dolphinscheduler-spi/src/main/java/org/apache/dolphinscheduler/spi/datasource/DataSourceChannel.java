@@ -21,5 +21,12 @@ import org.apache.dolphinscheduler.spi.enums.DbType;
 
 public interface DataSourceChannel {
 
+    /**
+     * 创建一个数据源Channel
+     *
+     * @param baseConnectionParam 连接参数
+     * @param dbType              数据源类型
+     * @return 返回数据源客户端
+     */
     DataSourceClient createDataSourceClient(BaseConnectionParam baseConnectionParam, DbType dbType);
 }
