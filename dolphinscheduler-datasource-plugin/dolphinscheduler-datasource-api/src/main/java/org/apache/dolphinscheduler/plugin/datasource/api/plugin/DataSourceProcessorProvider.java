@@ -24,6 +24,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 
+/**
+ * 单例模式
+ */
 public class DataSourceProcessorProvider {
     private static final Logger logger = LoggerFactory.getLogger(DataSourceProcessorProvider.class);
 
@@ -42,6 +45,7 @@ public class DataSourceProcessorProvider {
     }
 
     public Map<String, DataSourceProcessor> getDataSourceProcessorMap() {
+        // 返回数据源处理器
         return dataSourcePluginManager.getDataSourceProcessorMap();
     }
 

@@ -32,14 +32,18 @@ import org.slf4j.LoggerFactory;
 public class DataSourceProcessorManager {
     private static final Logger logger = LoggerFactory.getLogger(DataSourceProcessorManager.class);
 
+    /**
+     * key: DbType.name， value: DataSourceProcessor，这个并发map管理案例所有数据源处理器
+     */
     private static final Map<String, DataSourceProcessor> dataSourceProcessorMap = new ConcurrentHashMap<>();
 
     public Map<String, DataSourceProcessor> getDataSourceProcessorMap() {
+        // 返回一个不可更改的map，封装了dataSourceProcessorMap
         return Collections.unmodifiableMap(dataSourceProcessorMap);
     }
 
     public void installProcessor() {
-
+        // 注册DataSourceProcessor到map
         ServiceLoader.load(DataSourceProcessor.class).forEach(factory -> {
             final String name = factory.getDbType().name();
 
@@ -54,6 +58,10 @@ public class DataSourceProcessorManager {
         });
     }
 
+    /**
+     * 创建DataSourceProcessor实例，随后放到map里面
+     * @param processor
+     */
     private void loadDatasourceClient(DataSourceProcessor processor) {
         DataSourceProcessor instance = processor.create();
         dataSourceProcessorMap.put(processor.getDbType().name(), instance);

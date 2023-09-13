@@ -60,6 +60,7 @@ public class MySQLDataSourceProcessor extends AbstractDataSourceProcessor {
 
     @Override
     public BaseDataSourceParamDTO castDatasourceParamDTO(String paramJson) {
+        // 反序列化
         return JSONUtils.parseObject(paramJson, MySQLDataSourceParamDTO.class);
     }
 
@@ -86,8 +87,10 @@ public class MySQLDataSourceProcessor extends AbstractDataSourceProcessor {
     @Override
     public BaseConnectionParam createConnectionParams(BaseDataSourceParamDTO dataSourceParam) {
         MySQLDataSourceParamDTO mysqlDatasourceParam = (MySQLDataSourceParamDTO) dataSourceParam;
+        // jdbc:mysql://host:port
         String address = String.format("%s%s:%s", DataSourceConstants.JDBC_MYSQL, mysqlDatasourceParam.getHost(),
                 mysqlDatasourceParam.getPort());
+        // jdbc:mysql://host:port/database
         String jdbcUrl = String.format("%s/%s", address, mysqlDatasourceParam.getDatabase());
 
         MySQLConnectionParam
@@ -131,6 +134,13 @@ public class MySQLDataSourceProcessor extends AbstractDataSourceProcessor {
         return String.format("%s?%s", jdbcUrl, APPEND_PARAMS);
     }
 
+    /**
+     * 获取连接
+     * @param connectionParam connectionParam
+     * @return
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     */
     @Override
     public Connection getConnection(ConnectionParam connectionParam) throws ClassNotFoundException, SQLException {
         MySQLConnectionParam mysqlConnectionParam = (MySQLConnectionParam) connectionParam;

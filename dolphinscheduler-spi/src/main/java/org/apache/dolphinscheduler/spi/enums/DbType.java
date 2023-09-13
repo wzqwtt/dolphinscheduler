@@ -69,6 +69,7 @@ public enum DbType {
     }
 
     public static DbType ofName(String name) {
+        // 遍历DbType枚举类，只保留等于name的元素，然后返回第一个，如果没有找到就抛出no such db type异常
         return Arrays.stream(DbType.values()).filter(e -> e.name().equals(name)).findFirst().orElseThrow(() -> new NoSuchElementException("no such db type"));
     }
 

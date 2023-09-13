@@ -53,6 +53,7 @@ public class DataSourceUtils {
      * @param baseDataSourceParamDTO datasourceParam
      */
     public static ConnectionParam buildConnectionParams(BaseDataSourceParamDTO baseDataSourceParamDTO) {
+        // 构建连接参数
         ConnectionParam connectionParams = getDatasourceProcessor(baseDataSourceParamDTO.getType())
                 .createConnectionParams(baseDataSourceParamDTO);
         logger.info("parameters map:{}", connectionParams);
@@ -67,6 +68,12 @@ public class DataSourceUtils {
         return getDatasourceProcessor(dbType).getJdbcUrl(baseConnectionParam);
     }
 
+    /**
+     * 获取对应数据源的连接
+     * @param dbType
+     * @param connectionParam
+     * @return
+     */
     public static Connection getConnection(DbType dbType, ConnectionParam connectionParam) {
         try {
             return getDatasourceProcessor(dbType).getConnection(connectionParam);
@@ -84,10 +91,13 @@ public class DataSourceUtils {
     }
 
     public static DataSourceProcessor getDatasourceProcessor(DbType dbType) {
+        // 获取所有数据源组成的map
         Map<String, DataSourceProcessor> dataSourceProcessorMap = DataSourceProcessorProvider.getInstance().getDataSourceProcessorMap();
+        // 如果没有找到对应的数据库类型，抛出illegal datasource type异常
         if (!dataSourceProcessorMap.containsKey(dbType.name())) {
             throw new IllegalArgumentException("illegal datasource type");
         }
+        // 返回对应的数据源处理器
         return dataSourceProcessorMap.get(dbType.name());
     }
 
@@ -102,8 +112,14 @@ public class DataSourceUtils {
      * build connection url
      */
     public static BaseDataSourceParamDTO buildDatasourceParam(String param) {
+        // 解析param为jsonNode
         JsonNode jsonNodes = JSONUtils.parseObject(param);
 
+        /**
+         * 首先获取连接数据库的类型 DbType.ofName(jsonNodes.get("type").asText().toUpperCase())
+         * getDataSourceProcessor获取对应的处理器
+         * caseDatasourceParamDTO创建对应的java bean
+         */
         return getDatasourceProcessor(DbType.ofName(jsonNodes.get("type").asText().toUpperCase()))
                 .castDatasourceParamDTO(param);
     }

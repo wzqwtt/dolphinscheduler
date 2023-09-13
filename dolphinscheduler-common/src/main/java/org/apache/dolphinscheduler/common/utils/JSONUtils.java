@@ -146,6 +146,7 @@ public class JSONUtils {
         }
 
         try {
+            // 反序列化
             return objectMapper.readValue(json, clazz);
         } catch (Exception e) {
             logger.error("Parse object exception, jsonStr: {}, class: {}", json, clazz, e);

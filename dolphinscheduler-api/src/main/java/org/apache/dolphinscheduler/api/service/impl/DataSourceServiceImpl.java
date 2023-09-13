@@ -99,13 +99,16 @@ public class DataSourceServiceImpl extends BaseServiceImpl implements DataSource
     @Override
     @Transactional
     public Result<Object> createDataSource(User loginUser, BaseDataSourceParamDTO datasourceParam) {
+        // 核验参数
         DataSourceUtils.checkDatasourceParam(datasourceParam);
+
         Result<Object> result = new Result<>();
         if (!canOperatorPermissions(loginUser, null, AuthorizationType.DATASOURCE,
                 ApiFuncIdentificationConstant.DATASOURCE_CREATE_DATASOURCE)) {
             putMsg(result, Status.USER_NO_OPERATION_PERM);
             return result;
         }
+
         // check name can use or not
         if (checkName(datasourceParam.getName())) {
             putMsg(result, Status.DATASOURCE_EXIST);
@@ -115,8 +118,11 @@ public class DataSourceServiceImpl extends BaseServiceImpl implements DataSource
             putMsg(result, Status.DESCRIPTION_TOO_LONG_ERROR);
             return result;
         }
-        // check connect
+
+        // check connect 检查连接是否正常
+        // 构建连接参数，这个方法会找到数据源类型对应的DataSourceProcessor进行构建
         ConnectionParam connectionParam = DataSourceUtils.buildConnectionParams(datasourceParam);
+        // 检查连接是否正常
         Result<Object> isConnection = checkConnection(datasourceParam.getType(), connectionParam);
         if (Status.SUCCESS.getCode() != isConnection.getCode()) {
             putMsg(result, Status.DATASOURCE_CONNECT_FAILED);
