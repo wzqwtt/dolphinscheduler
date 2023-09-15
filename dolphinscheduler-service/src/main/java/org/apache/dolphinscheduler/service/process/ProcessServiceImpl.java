@@ -146,6 +146,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
+
 import org.apache.commons.collections.MapUtils;
 
 import java.util.ArrayList;
@@ -3050,9 +3051,9 @@ public class ProcessServiceImpl implements ProcessService {
                 }
             } while (thisTaskGroupQueue.getForceStart() == Flag.NO.getCode()
                     && taskGroupMapper.releaseTaskGroupResource(taskGroup.getId(),
-                            taskGroup.getUseSize(),
-                            thisTaskGroupQueue.getId(),
-                            TaskGroupQueueStatus.ACQUIRE_SUCCESS.getCode()) != 1);
+                    taskGroup.getUseSize(),
+                    thisTaskGroupQueue.getId(),
+                    TaskGroupQueueStatus.ACQUIRE_SUCCESS.getCode()) != 1);
         } catch (Exception e) {
             logger.error("release the task group error", e);
             return null;
